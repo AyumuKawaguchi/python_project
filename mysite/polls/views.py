@@ -1,16 +1,28 @@
-from django.http import HttpResponse
 from .models import Question
-# from django.views.generic import TemplateView
-# from django.shortcuts import render, redirect, get_object_or_404
+
+# {①に必要、②はいらない}
+from django.http import HttpResponse
+from django.template import loader
+# {②に必要、①はいらない}
+from django.shortcuts import render, redirect, get_object_or_404
 
 def index(request):
-    latest_question_list = Question.objects.order_by('-pub_date')[:5]
-    output = ', '.join([q.question_text for q in latest_question_list])
-    return HttpResponse(output)
+    # latest_question_list = Question.objects.order_by('-pub_date')[:5]
+    # データベースからquestionのオブジェクトを発表順に5つまで表示する
+    # output = ', '.join([q.question_text for q in latest_question_list])
+    #変数qというのはここではlatest_question_listから取り出した1つ1つの要素のこと
+    #変数qにlatest_question_listから1つずつオブジェクトを取り出してオブジェクトの質問のテキストをカンマ区切りで表示するということ。
+    # return HttpResponse(output)
 
-# テンプレート呼び出し
-# class IndexView(TemplateView):
-#     template_name = "index.html"
+# {①が必要}
+    # latest_question_list = Question.objects.order_by('-pub_date')[:5]
+    # template =  loader.get_template('polls/index.html')
+    # context = {'latest_question_list': latest_question_list,}
+    # return HttpResponse(template.render(context, request))
+# {②が必要}
+    latest_question_list = Question.objects.order_by('-pub_date')[:5]
+    context = {'latest_question_list': latest_question_list}
+    return render(request, 'polls/index.html', context)
 
 def detail(request, question_id):
     return HttpResponse("You're looking at question %s." % question_id)
