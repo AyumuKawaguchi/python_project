@@ -1,12 +1,42 @@
 from .models import Question, Choice
 from django.urls import reverse
-
 # {①に必要、②はいらない}
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 # {②に必要、①はいらない}
 from django.shortcuts import render, redirect, get_object_or_404
+# {汎用ビューを使う時}
+from django.views import generic
 
+
+# {汎用ビューを使う時のクラス設定}
+# 重要・・・そもそもListViewはオブジェクトに対するリスト
+#           そしてDetailViewはオブジェクトの中身に対するアプローチなので、例え結果という一覧（リスト）があったとしてもそれはあくまでオブジェクトであるquestionの詳細情報ということになるから、その際はDetailViewを使うのである。
+
+class IndexView(generic.ListView):
+    template_name = 'polls/index.html'
+    
+    context_object_name = 'latest_question_list'
+    # これを使っている理由は、ListViewの自動生成の変数が使用モデル名_listになるが、自分で自由に変数名を設定する為にcontext_object_nameを使って設定していて、そのおかげで、ビューのlatest_question_listを変更せずに使える。これを設定しなかったら、ビューのlatest_question_listをquestion_listにすれば一応使える。
+
+    def get_queryset(self):
+        return Question.objects.order_by('-pub_date')[:5]
+
+class DetailView(generic.DetailView):#この時点で下で設定するモデルの詳細ページを表示するという意味になる
+    model = Question
+    template_name = 'polls/detail.html'
+
+class ResultsView(generic.DetailView):
+  #なぜリザルトなのにgeneric.DetailViewを使っているかと言うと、genericつまり汎用ビューのヘルパーの機能として、ListViewとDetail.viewがある。そしてリザルトというのはあるモデルに対しての詳細内容に含まれるから使っているという解釈
+
+    model = Question
+    template_name = 'polls/results.html'
+
+# def vote(request, question_id):
+#     ... # same as above, no changes needed.
+
+
+# {汎用ビューを使う際には全部消して大丈夫}
 def index(request):
     # latest_question_list = Question.objects.order_by('-pub_date')[:5]
     # データベースからquestionのオブジェクトを発表順に5つまで表示する
@@ -24,6 +54,7 @@ def index(request):
     latest_question_list = Question.objects.order_by('-pub_date')[:5]
     context = {'latest_question_list': latest_question_list}
     return render(request, 'polls/index.html', context)
+
 
 def detail(request, question_id):
     # try:
