@@ -1,7 +1,8 @@
-from .models import Question
+from .models import Question, Choice
+from django.urls import reverse
 
 # {①に必要、②はいらない}
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 # {②に必要、①はいらない}
 from django.shortcuts import render, redirect, get_object_or_404
@@ -25,15 +26,39 @@ def index(request):
     return render(request, 'polls/index.html', context)
 
 def detail(request, question_id):
-    return HttpResponse("You're looking at question %s." % question_id)
-# detail アクションが起こったら、リクエストで指定されたIdを見つけて
-# return内容を表示しなさい的な意味であってるはず
+    # try:
+    #     question = Question.objects.get(pk=question_id)
+    # except Question.DoesNotExist:
+    #     raise Http404("Question dose not exist")
+    # return render(request, 'polls/detail.html', {'question': question})
+    
+    question = get_object_or_404(Question, pk=question_id)
+    return render(request, 'polls/detail.html', {'question': question})
 
 def results(request, question_id):
-    response = "You're looking at the results of question %s."
-    return HttpResponse(response % question_id)
+    question = get_object_or_404(Question, pk=question_id)
+    return render(request, 'polls/results.html', {'question': question})
 
 def vote(request, question_id):
-    return HttpResponse("You're voting on question %s" % question_id)
+    question = get_object_or_404(Question, pk=question_id)
+    try:
+        selected_choice = question.choice_set.get(pk=request.POST['choice'])
+        # request.POSTではキーを指定すると、送信したデータにアクセスできる。request.POST[choice]は選択された選択肢のIDを文字列として返す。
+    except (KeyError, Choice.DoesNotExist):
+        return render(request, 'polls/detail.html', {
+            'question': question,
+            'error_message': "You didn't select a choice.",
+        })
+    else:
+        selected_choice.votes += 1
+        selected_choice.save()
+        return HttpResponseRedirect(reverse('polls:results', args=(question.id,)))
+        #choiceカウントを１増やした後に、どっか指定の場所に飛ばす際にはリダイレクトを使うので、Httpレスポンスを返すのではなく、Httpレスポンスリダイレクトを返す。
+        #argsは引数を意味しpolls/resultsがどの質問に対してのリザルトページに行けば良いのかを指定してあげている。
+        # リバース関数が何をしているのかというと、リバース関数内にURLパターンに設定したnameを使ってやると、返り値としてURLを返してくれるというもの。今回で言えば、明示的にpollsのどのリザルト画面に行けば良いかを示すための組み合わせをしていると考えてみよう。
 
 
+# def vote(request, question_id):
+#     return HttpResponse("You're voting on question %s" % question_id)
+# detail アクションが起こったら、リクエストで指定されたIdを見つけて
+# return内容を表示しなさい的な意味であってるはず

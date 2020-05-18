@@ -2,6 +2,9 @@ from django.urls import path
 
 from . import views
 
+app_name = 'polls'
+# これを設定することでプロジェクト内のどのアプリを使用しているか、ひいてはどのアプリのビューを使うかを定める。これを名前空間という。
+
 urlpatterns = [
     # ex: /polls/
     path('', views.index, name='index'),
